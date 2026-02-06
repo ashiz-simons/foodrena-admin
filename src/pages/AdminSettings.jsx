@@ -2,22 +2,22 @@ import { useState } from "react";
 import api from "../lib/api";
 
 export default function AdminSettings() {
-  /* ======================
-     EMAIL CHANGE STATE
-  ====================== */
   const [newEmail, setNewEmail] = useState("");
   const [emailToken, setEmailToken] = useState("");
   const [emailStep, setEmailStep] = useState("request");
 
-  /* ======================
-     PASSWORD CHANGE STATE
-  ====================== */
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("info");
+
+  const notify = (msg, type = "info") => {
+    setMessage(msg);
+    setMessageType(type);
+  };
 
   /* ======================
      EMAIL CHANGE
@@ -25,14 +25,14 @@ export default function AdminSettings() {
   const requestEmailChange = async () => {
     try {
       setLoading(true);
-      setMessage("");
+      notify("");
 
       await api.post("/admin/settings/email/request", { newEmail });
 
       setEmailStep("verify");
-      setMessage("Verification token sent to new email");
+      notify("Verification token sent to new email", "success");
     } catch (err) {
-      setMessage(err.response?.data?.message || "Request failed");
+      notify(err.response?.data?.message || "Request failed", "error");
     } finally {
       setLoading(false);
     }
@@ -41,16 +41,16 @@ export default function AdminSettings() {
   const verifyEmailChange = async () => {
     try {
       setLoading(true);
-      setMessage("");
+      notify("");
 
       await api.post("/admin/settings/email/confirm", {
         token: emailToken,
       });
 
-      setMessage("Email updated successfully");
+      notify("Email updated successfully", "success");
       setEmailStep("done");
     } catch (err) {
-      setMessage(err.response?.data?.message || "Verification failed");
+      notify(err.response?.data?.message || "Verification failed", "error");
     } finally {
       setLoading(false);
     }
@@ -61,54 +61,61 @@ export default function AdminSettings() {
   ====================== */
   const changePassword = async () => {
     if (newPassword !== confirmPassword) {
-      return setMessage("Passwords do not match");
+      return notify("Passwords do not match", "error");
     }
 
     try {
       setLoading(true);
-      setMessage("");
+      notify("");
 
       await api.patch("/admin/settings/password", {
         currentPassword,
         newPassword,
       });
 
-      setMessage("Password updated successfully");
+      notify("Password updated successfully", "success");
+
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err) {
-      setMessage(err.response?.data?.message || "Password update failed");
+      notify(err.response?.data?.message || "Password update failed", "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-xl space-y-10">
+    <div className="max-w-3xl space-y-10">
 
-      {/* ======================
-          EMAIL SETTINGS
-      ====================== */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-bold mb-4">Change Email</h2>
+      {/* HEADER */}
+      <div>
+        <h1 className="text-2xl font-bold">Admin Settings</h1>
+        <p className="text-sm text-gray-500">
+          Manage account security and credentials
+        </p>
+      </div>
+
+      {/* EMAIL SETTINGS */}
+      <div className="bg-white p-6 rounded-xl shadow space-y-4">
+        <h2 className="text-lg font-semibold">Change Email</h2>
 
         {emailStep === "request" && (
           <>
             <input
               type="email"
-              placeholder="New email"
+              placeholder="New email address"
               value={newEmail}
               onChange={e => setNewEmail(e.target.value)}
-              className="w-full px-3 py-2 border rounded mb-3"
+              className="w-full px-3 py-2 border rounded focus:ring"
             />
 
             <button
               onClick={requestEmailChange}
               disabled={loading}
-              className="bg-blue-600 text-white px-4 py-2 rounded"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
             >
-              Send Verification
+              {loading ? "Sending..." : "Send Verification"}
             </button>
           </>
         )}
@@ -119,38 +126,36 @@ export default function AdminSettings() {
               placeholder="Verification token"
               value={emailToken}
               onChange={e => setEmailToken(e.target.value)}
-              className="w-full px-3 py-2 border rounded mb-3"
+              className="w-full px-3 py-2 border rounded focus:ring"
             />
 
             <button
               onClick={verifyEmailChange}
               disabled={loading}
-              className="bg-green-600 text-white px-4 py-2 rounded"
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
             >
-              Verify Email
+              {loading ? "Verifying..." : "Verify Email"}
             </button>
           </>
         )}
 
         {emailStep === "done" && (
           <p className="text-green-600 font-medium">
-            Email updated ✔
+            Email updated successfully ✔
           </p>
         )}
       </div>
 
-      {/* ======================
-          PASSWORD SETTINGS
-      ====================== */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-bold mb-4">Change Password</h2>
+      {/* PASSWORD SETTINGS */}
+      <div className="bg-white p-6 rounded-xl shadow space-y-4">
+        <h2 className="text-lg font-semibold">Change Password</h2>
 
         <input
           type="password"
           placeholder="Current password"
           value={currentPassword}
           onChange={e => setCurrentPassword(e.target.value)}
-          className="w-full px-3 py-2 border rounded mb-3"
+          className="w-full px-3 py-2 border rounded focus:ring"
         />
 
         <input
@@ -158,7 +163,7 @@ export default function AdminSettings() {
           placeholder="New password"
           value={newPassword}
           onChange={e => setNewPassword(e.target.value)}
-          className="w-full px-3 py-2 border rounded mb-3"
+          className="w-full px-3 py-2 border rounded focus:ring"
         />
 
         <input
@@ -166,42 +171,51 @@ export default function AdminSettings() {
           placeholder="Confirm new password"
           value={confirmPassword}
           onChange={e => setConfirmPassword(e.target.value)}
-          className="w-full px-3 py-2 border rounded mb-4"
+          className="w-full px-3 py-2 border rounded focus:ring"
         />
 
         <button
           onClick={changePassword}
           disabled={loading}
-          className="bg-red-600 text-white px-4 py-2 rounded"
+          className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
         >
           {loading ? "Updating..." : "Update Password"}
         </button>
       </div>
 
-      {/* ======================
-    SECURITY SETTINGS
-====================== */}
-<div className="bg-white p-6 rounded-lg shadow">
-  <h2 className="text-lg font-bold mb-4">Security</h2>
+      {/* SECURITY */}
+      <div className="bg-white p-6 rounded-xl shadow space-y-3">
+        <h2 className="text-lg font-semibold">Security</h2>
 
-  <button
-    onClick={async () => {
-      const res = await api.patch("/admin/settings/2fa");
-      setMessage(
-        res.data.enabled
-          ? "Two-factor authentication enabled"
-          : "Two-factor authentication disabled"
-      );
-    }}
-    className="px-4 py-2 bg-gray-800 text-white rounded"
-  >
-    Toggle Two-Factor Authentication
-  </button>
-</div>
+        <button
+          onClick={async () => {
+            const res = await api.patch("/admin/settings/2fa");
+            notify(
+              res.data.enabled
+                ? "Two-factor authentication enabled"
+                : "Two-factor authentication disabled",
+              "success"
+            );
+          }}
+          className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-black transition"
+        >
+          Toggle Two-Factor Authentication
+        </button>
+      </div>
 
-
+      {/* MESSAGE */}
       {message && (
-        <div className="text-sm text-blue-600">{message}</div>
+        <div
+          className={`text-sm px-4 py-2 rounded ${
+            messageType === "success"
+              ? "bg-green-50 text-green-700"
+              : messageType === "error"
+              ? "bg-red-50 text-red-700"
+              : "bg-blue-50 text-blue-700"
+          }`}
+        >
+          {message}
+        </div>
       )}
     </div>
   );

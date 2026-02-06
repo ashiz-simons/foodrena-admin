@@ -13,6 +13,8 @@ import AdminSettings from "./pages/AdminSettings";
 import AdminForgotPassword from "./pages/AdminForgotPassword";
 import AdminVerifyReset from "./pages/AdminVerifyReset";
 import AdminResetPassword from "./pages/AdminResetPassword";
+import Riders from "./pages/Riders";
+import RiderWithdrawals from "./pages/RiderWithdrawals";
 
 export default function App() {
   return (
@@ -41,6 +43,8 @@ export default function App() {
             <Route path="orders" element={<Orders />} />
             <Route path="withdrawals" element={<Withdrawals />} />
             <Route path="earnings" element={<Earnings />} />
+            <Route path="/rider-withdrawals" element={<RiderWithdrawals />} />
+            <Route path="/riders" element={<Riders />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
 

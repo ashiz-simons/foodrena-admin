@@ -2,25 +2,35 @@ import { NavLink } from "react-router-dom";
 
 const links = [
   { name: "Dashboard", path: "/" },
-  { name: "Vendors", path: "/vendors" },
+
+  // Core Ops
   { name: "Orders", path: "/orders" },
+  { name: "Vendors", path: "/vendors" },
+  { name: "Riders", path: "/riders" },
+
+  // Finance
   { name: "Withdrawals", path: "/withdrawals" },
   { name: "Earnings", path: "/earnings" },
-  { name: "Settings", path: "/settings" }, // ✅ added
+  { name: "Rider Withdrawals", path: "/rider-withdrawals" },
+  // System
+  { name: "Settings", path: "/settings" },
 ];
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 bg-white border-r h-screen">
-      <div className="p-6 font-bold text-xl">Foodrena Admin</div>
+    <aside className="w-64 bg-white border-r h-screen flex flex-col">
 
-      <nav className="space-y-1 px-3">
+      <div className="p-6 font-bold text-xl">
+        Foodrena Admin
+      </div>
+
+      <nav className="space-y-1 px-3 flex-1">
         {links.map(link => (
           <NavLink
             key={link.path}
             to={link.path}
             className={({ isActive }) =>
-              `block px-4 py-2 rounded transition ${
+              `block px-4 py-2 rounded transition text-sm ${
                 isActive
                   ? "bg-blue-600 text-white"
                   : "text-gray-700 hover:bg-gray-100"
@@ -31,6 +41,13 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Footer / Role Indicator */}
+      <div className="p-4 text-xs text-gray-400 border-t">
+        Admin Panel • Foodrena
+        property of AshizVerse.
+      </div>
+
     </aside>
   );
 }
