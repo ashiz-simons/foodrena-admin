@@ -15,6 +15,10 @@ import AdminVerifyReset from "./pages/AdminVerifyReset";
 import AdminResetPassword from "./pages/AdminResetPassword";
 import Riders from "./pages/Riders";
 import RiderWithdrawals from "./pages/RiderWithdrawals";
+import AdminRiderRadar from "./pages/AdminRiderRader"; // ← keep old filename
+import AdminPromos from "./pages/AdminPromos";
+import AdminSupport from "./pages/AdminSupport";
+import Banners from "./pages/Banners";
 
 export default function App() {
   return (
@@ -24,7 +28,6 @@ export default function App() {
 
           {/* ================= PUBLIC ================= */}
           <Route path="/login" element={<Login />} />
-
           <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
           <Route path="/admin/verify-reset" element={<AdminVerifyReset />} />
           <Route path="/admin/reset-password" element={<AdminResetPassword />} />
@@ -42,14 +45,17 @@ export default function App() {
             <Route path="vendors" element={<Vendors />} />
             <Route path="orders" element={<Orders />} />
             <Route path="withdrawals" element={<Withdrawals />} />
+            <Route path="rider-withdrawals" element={<RiderWithdrawals />} />
+            <Route path="riders" element={<Riders />} />
+            <Route path="rider-radar" element={<AdminRiderRadar />} /> {/* ← added */}
             <Route path="earnings" element={<Earnings />} />
-            <Route path="/rider-withdrawals" element={<RiderWithdrawals />} />
-            <Route path="/riders" element={<Riders />} />
             <Route path="settings" element={<AdminSettings />} />
+            <Route path="/promos" element={<ProtectedRoute><AdminPromos /></ProtectedRoute>} />
+            <Route path="/support" element={<ProtectedRoute><AdminSupport /></ProtectedRoute>} />
+            <Route path="/banners" element={<ProtectedRoute><Banners /></ProtectedRoute>} />
           </Route>
 
         </Routes>
-
       </BrowserRouter>
     </AuthProvider>
   );
