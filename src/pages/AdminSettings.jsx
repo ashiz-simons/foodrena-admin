@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../lib/api";
+import { useEffect } from "react";
 
 export default function AdminSettings() {
   const [newEmail, setNewEmail] = useState("");
@@ -13,6 +14,15 @@ export default function AdminSettings() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
+
+  const [flatFee, setFlatFee] = useState("");
+  const [percentage, setPercentage] = useState("");
+  const [minFee, setMinFee] = useState("");
+  const [maxFee, setMaxFee] = useState("");
+  const [configLoading, setConfigLoading] = useState(false);
+
+  const [vendorPercent, setVendorPercent] = useState("");
+  const [riderPercent, setRiderPercent] = useState("");
 
   const notify = (msg, type = "info") => {
     setMessage(msg);
@@ -84,6 +94,119 @@ export default function AdminSettings() {
       setLoading(false);
     }
   };
+
+    useEffect(() => {
+        const fetchConfig = async () => {
+          try {
+            setConfigLoading(true);
+
+            const res = await api.get("/admin/config");
+            const data = res.data;
+
+            // Service Fee
+            setFlatFee(data.serviceFee?.flatFee ?? 0);
+            setPercentage((data.serviceFee?.percentage ?? 0) * 100);
+            setMinFee(data.serviceFee?.minFee ?? 0);
+            setMaxFee(data.serviceFee?.maxFee ?? "");
+
+            // Pricing
+            setVendorPercent((data.pricing?.vendorCommissionPercent ?? 0.1) * 100);
+            setRiderPercent((data.pricing?.riderPayoutPercent ?? 0.7) * 100);
+
+          } catch (err) {
+            notify("Failed to load config", "error");
+          } finally {
+            setConfigLoading(false);
+          }
+        };
+
+        fetchConfig();
+      }, []);
+
+    const validateServiceFee = () => {
+      const flat = Number(flatFee);
+      const perc = Number(percentage);
+      const min = Number(minFee);
+      const max = maxFee ? Number(maxFee) : null;
+
+      // Empty check
+      if (flatFee === "" || percentage === "" || minFee === "") {
+        notify("All required fields must be filled", "error");
+        return false;
+      }
+
+      // Negative values
+      if (flat < 0 || perc < 0 || min < 0 || (max !== null && max < 0)) {
+        notify("Values cannot be negative", "error");
+        return false;
+      }
+
+      // Percentage limit (0–100)
+      if (perc > 100) {
+        notify("Percentage cannot exceed 100%", "error");
+        return false;
+      }
+
+      // Prevent zero revenue
+      if (flat === 0 && perc === 0) {
+        notify("Flat fee and percentage cannot both be 0", "error");
+        return false;
+      }
+
+      // Min vs Max
+      if (max !== null && min > max) {
+        notify("Minimum fee cannot be greater than maximum fee", "error");
+        return false;
+      }
+
+      return true;
+    };
+
+    const updatePricing = async () => {
+      try {
+        setLoading(true);
+        notify("");
+
+        await api.put("/admin/config/pricing", {
+          vendorCommissionPercent: Number(vendorPercent) / 100,
+          riderPayoutPercent: Number(riderPercent) / 100,
+        });
+
+        notify("Pricing updated successfully", "success");
+      } catch (err) {
+        notify(
+          err.response?.data?.message || "Failed to update pricing",
+          "error"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const updateServiceFee = async () => {
+      if (!validateServiceFee()) return;
+
+      try {
+        setLoading(true);
+        notify("");
+
+        await api.put("/admin/config/service-fee", {
+          flatFee: Number(flatFee),
+          percentage: Number(percentage) / 100, // ✅ FIXED
+          minFee: Number(minFee),
+          maxFee: maxFee ? Number(maxFee) : null,
+        });
+
+        notify("Service fee updated successfully", "success");
+      } catch (err) {
+        notify(
+          err.response?.data?.message || "Failed to update service fee",
+          "error"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
   return (
     <div className="max-w-3xl space-y-10">
@@ -200,6 +323,95 @@ export default function AdminSettings() {
           className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-black transition"
         >
           Toggle Two-Factor Authentication
+        </button>
+      </div>
+
+      {/* SERVICE FEE SETTINGS */}
+      <div className="bg-white p-6 rounded-xl shadow space-y-4">
+        <h2 className="text-lg font-semibold">Service Fee Settings</h2>
+
+        {configLoading ? (
+          <p className="text-sm text-gray-500">Loading...</p>
+        ) : (
+          <>
+            <input
+              type="number"
+              placeholder="Flat Fee (₦)"
+              value={flatFee}
+              onChange={e => setFlatFee(e.target.value)}
+              className="w-full px-3 py-2 border rounded focus:ring"
+            />
+
+            <input
+              type="number"
+              placeholder="Percentage (%)"
+              value={percentage}
+              onChange={e => setPercentage(e.target.value)}
+              className="w-full px-3 py-2 border rounded focus:ring"
+            />
+            <p className="text-xs text-gray-500">
+              Example: 5 = 5%
+            </p>
+
+            <input
+              type="number"
+              placeholder="Minimum Fee (₦)"
+              value={minFee}
+              onChange={e => setMinFee(e.target.value)}
+              className="w-full px-3 py-2 border rounded focus:ring"
+            />
+
+            <input
+              type="number"
+              placeholder="Maximum Fee (optional)"
+              value={maxFee}
+              onChange={e => setMaxFee(e.target.value)}
+              className="w-full px-3 py-2 border rounded focus:ring"
+            />
+
+            <button
+              onClick={updateServiceFee}
+              disabled={loading}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            >
+              {loading ? "Updating..." : "Save Service Fee"}
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* PRICING SETTINGS */}
+      <div className="bg-white p-6 rounded-xl shadow space-y-4">
+        <h2 className="text-lg font-semibold">Revenue Split</h2>
+
+        <input
+          type="number"
+          placeholder="Vendor Commission (%)"
+          value={vendorPercent}
+          onChange={e => setVendorPercent(e.target.value)}
+          className="w-full px-3 py-2 border rounded focus:ring"
+        />
+        <p className="text-xs text-gray-500">
+          Example: 10 = 10% platform commission from vendor
+        </p>
+
+        <input
+          type="number"
+          placeholder="Rider Payout (%)"
+          value={riderPercent}
+          onChange={e => setRiderPercent(e.target.value)}
+          className="w-full px-3 py-2 border rounded focus:ring"
+        />
+        <p className="text-xs text-gray-500">
+          Example: 70 = 70% of delivery fee goes to rider
+        </p>
+
+        <button
+          onClick={updatePricing}
+          disabled={loading}
+          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
+        >
+          {loading ? "Updating..." : "Save Pricing"}
         </button>
       </div>
 
