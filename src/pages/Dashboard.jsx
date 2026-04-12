@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
 import api from "../lib/api";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
 } from "recharts";
 
 const formatMoney = n => `₦${Number(n || 0).toLocaleString()}`;
@@ -22,9 +17,9 @@ function Card({ label, value, highlight }) {
 }
 
 const statusColor = status => {
-  if (status === "completed") return "text-green-600";
+  if (status === "delivered") return "text-green-600";
   if (status === "cancelled") return "text-red-500";
-  if (status === "pending") return "text-yellow-500";
+  if (status === "pending")   return "text-yellow-500";
   return "text-gray-500";
 };
 
@@ -41,10 +36,9 @@ export default function Dashboard() {
   }, []);
 
   if (loading) return <div className="text-gray-500 p-6">Loading dashboard...</div>;
-  if (error) return <div className="text-red-500 p-6">{error}</div>;
-  if (!stats) return null;
+  if (error)   return <div className="text-red-500 p-6">{error}</div>;
+  if (!stats)  return null;
 
-  // Completion rate
   const completionRate = stats.totalOrders > 0
     ? Math.round((stats.completedOrders / stats.totalOrders) * 100)
     : 0;
@@ -52,23 +46,23 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
 
-      {/* HEADER */}
       <div>
         <h1 className="text-2xl font-bold">Foodrena Admin Overview</h1>
         <p className="text-gray-500 text-sm">Real-time platform performance & growth metrics</p>
       </div>
 
-      {/* KPI GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <Card label="Total Orders" value={stats.totalOrders} />
-        <Card label="Completed" value={stats.completedOrders} />
-        <Card label="Cancelled" value={stats.cancelledOrders} />
-        <Card label="Users" value={stats.totalUsers} />
-        <Card label="Vendors" value={stats.totalVendors} />
-        <Card label="Total Revenue" value={formatMoney(stats.totalRevenue)} highlight />
+      {/* KPI GRID — now 8 cards including riders */}
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
+        <Card label="Total Orders"    value={stats.totalOrders} />
+        <Card label="Delivered"       value={stats.completedOrders} />
+        <Card label="Cancelled"       value={stats.cancelledOrders} />
+        <Card label="Users"           value={stats.totalUsers} />
+        <Card label="Vendors"         value={stats.totalVendors} />
+        <Card label="Riders"          value={stats.totalRiders} />
+        <Card label="Total Revenue"   value={formatMoney(stats.totalRevenue)} highlight />
       </div>
 
-      {/* COMPLETION RATE BAR */}
+      {/* COMPLETION RATE */}
       <div className="bg-white rounded-xl shadow-sm border p-5">
         <div className="flex justify-between items-center mb-2 text-sm">
           <span className="font-medium">Order Completion Rate</span>
@@ -81,7 +75,7 @@ export default function Dashboard() {
           />
         </div>
         <div className="flex justify-between text-xs text-gray-400 mt-1">
-          <span>{stats.completedOrders} completed</span>
+          <span>{stats.completedOrders} delivered</span>
           <span>{stats.cancelledOrders} cancelled</span>
         </div>
       </div>
@@ -96,13 +90,8 @@ export default function Dashboard() {
               <XAxis dataKey="date" tick={{ fontSize: 11 }} />
               <YAxis tickFormatter={v => `₦${(v / 1000).toFixed(0)}k`} />
               <Tooltip formatter={v => formatMoney(v)} />
-              <Line
-                type="monotone"
-                dataKey="amount"
-                stroke="#2563eb"
-                strokeWidth={3}
-                dot={false}
-              />
+              <Line type="monotone" dataKey="amount" stroke="#2563eb"
+                strokeWidth={3} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -120,26 +109,19 @@ export default function Dashboard() {
             <h2 className="font-semibold text-lg">Recent Orders</h2>
             <span className="text-xs text-gray-400">Last {stats.recentOrders?.length || 0}</span>
           </div>
-
           {stats.recentOrders?.length === 0 ? (
             <p className="text-gray-500 text-sm">No recent orders</p>
           ) : (
             <div className="space-y-3">
               {stats.recentOrders?.map(o => (
-                <div
-                  key={o._id}
-                  className="flex justify-between items-center text-sm border-b pb-2 last:border-0"
-                >
+                <div key={o._id}
+                  className="flex justify-between items-center text-sm border-b pb-2 last:border-0">
                   <span className="font-mono text-gray-500">#{o._id.slice(-6)}</span>
-                  <span className="text-xs text-gray-400">
-                    {o.vendor?.businessName || "—"}
-                  </span>
+                  <span className="text-xs text-gray-400">{o.vendor?.businessName || "—"}</span>
                   <span className={`capitalize font-medium ${statusColor(o.status)}`}>
                     {o.status}
                   </span>
-                  <span className="font-semibold">
-                    {formatMoney(o.totalAmount)}
-                  </span>
+                  <span className="font-semibold">{formatMoney(o.total)}</span>
                 </div>
               ))}
             </div>
@@ -149,7 +131,6 @@ export default function Dashboard() {
         {/* TOP VENDORS */}
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <h2 className="font-semibold mb-4">Top Vendors by Revenue</h2>
-
           {stats.topVendors?.length === 0 ? (
             <p className="text-gray-400 text-sm">No vendor data yet</p>
           ) : (
