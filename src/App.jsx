@@ -5,7 +5,7 @@ import AdminLayout from "./layout/AdminLayout";
 
 import Dashboard from "./pages/Dashboard";
 import Vendors from "./pages/Vendors";
-import VendorDetail from "./pages/VendorDetail"; 
+import VendorDetail from "./pages/vendorDetail"; 
 import Orders from "./pages/Orders";
 import Withdrawals from "./pages/Withdrawals";
 import Earnings from "./pages/Earnings";
